@@ -55,6 +55,12 @@ section:not([hidden]){animation:rise .35s ease-out}
 .chip,.main,nav button,.wb button,.fb button{transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s,transform .12s,opacity .2s}
 .chip:active,.main:active,.wb button:active,.fb button:active{transform:scale(.96)}
 #grid figure{transition:transform .15s}#grid figure:active{transform:scale(.96)}
+.rain{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;text-align:left;transition:border-color .25s,box-shadow .25s,transform .12s}
+.rain:active{transform:scale(.985)}.rain b{display:block}.rain small{color:var(--mute);font-size:13px}
+.rain .ic{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;background:var(--bg);font-size:19px;transition:background-color .25s}
+.rain .sw{flex:none;margin-left:auto;width:46px;height:28px;border-radius:99px;background:var(--line);position:relative;transition:background-color .25s}
+.rain .sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(58,46,36,.3);transition:transform .28s cubic-bezier(.2,.9,.3,1)}
+.rain.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}.rain.on .ic,.rain.on .sw{background:var(--acc)}.rain.on .sw::after{transform:translateX(18px)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 .wb{display:flex;gap:10px;margin-top:12px}.wb button{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-weight:600}
 </style></head><body>
@@ -64,6 +70,7 @@ section:not([hidden]){animation:rise .35s ease-out}
 <p class="lbl">Стиль</p><div class="chips" id="st"></div>
 <p class="lbl">Цвета</p><div class="chips" id="co"></div>
 <p class="lbl">Погода</p><div class="chips" id="we"></div><p class="hint" id="wh"></p>
+<button class="rain" id="rain" type="button" aria-pressed="false"><span class="ic">🌧</span><span><b>Дождь</b><small>Подберу непромокаемые вещи и обувь</small></span><i class="sw"></i></button>
 <textarea id="wish" placeholder="Настроение или свои пожелания (необязательно)"></textarea>
 <button class="main" id="go">Подобрать</button><div id="res"></div>
 </section>
@@ -107,9 +114,9 @@ const CAT={top:'верх',bottom:'низ',dress:'платье',shoes:'обувь
 const WASH=['top','bottom','dress'];
 const SLOT={top:['top','dress'],bottom:['bottom'],shoes:['shoes'],outer:['outer'],accessory:['accessory']};
 const STY={walk:['Прогулка с собакой','неяркая, немаркая, неброская и практичная одежда, ничего нарядного (формальность 1-2, яркость низкая)'],event:['Мероприятие','самая элегантная и красивая одежда из имеющейся (формальность 4-5)'],day:['Обычный день','удобное, нейтральное, без изысков (формальность 2-3)'],sport:['Спорт','спортивная, комфортная одежда']};
-const WE=['Холодно (до +5°)','Прохладно (+5…+15°)','Тепло (+15…+25°)','Жарко (от +25°)','Дождь'];
+const WE=['Холодно (до +5°)','Прохладно (+5…+15°)','Тепло (+15…+25°)','Жарко (от +25°)'];
 const ANA='На фото одна вещь одежды. Верни JSON: {"name":"конкретное название с ключевыми признаками, например «Чёрный пуховик прямого кроя с капюшоном»","short":"одна фраза до 70 символов: материал, покрой, особенность","details":"3-5 предложений: оттенок цвета, материал и фактура, покрой и посадка, длина, детали (карманы, застёжки, принт, капюшон), с чем сочетать и когда уместно","cat":"top|bottom|dress|shoes|outer|accessory","layer":"только для cat top: base — тонкий базовый слой (футболка, майка, лонгслив, рубашка), mid — средний тёплый слой (свитшот, худи, свитер, кардиган, жилет); иначе null","colors":["до 3 основных цветов, по-русски, одно слово, нижний регистр"],"style":["casual|sport|elegant|classic|street"],"season":["зима|весна|лето|осень"],"formality":1-5,"bold":1-5,"warmth":1-5}. Описывай только то, что видно на фото; если материал неочевиден, пиши «похоже на …». warmth: 1 очень лёгкая (для жары), 3 демисезон, 5 очень тёплая (для мороза). formality: 1 очень простая, 5 очень нарядная. bold: 1 неброская, 5 очень яркая. top: футболка, рубашка, свитер; outer: куртка, пальто; dress: платье или комбинезон.';
-let items=[],outs=[],sel={st:'',co:new Set(),we:''};
+let items=[],outs=[],sel={st:'',co:new Set(),we:'',rain:false};
 const nm=id=>items.find(i=>i.id==id)?.name||'?';
 
 async function gem(parts,temp){const s=cfg();if(!s.key)throw Error('Сначала добавьте ключ Gemini в настройках');
@@ -125,13 +132,14 @@ async function shrink(f,max=640){const b=await createImageBitmap(f),k=Math.min(1
 function drawChips(){const on=(c,v)=>c?' on':'',cs=[...new Set(items.flatMap(i=>i.colors))];
  const h=(list,f,lab)=>list.map(x=>`<button class="chip${f(x)?' on':''}" data-v="${esc(x)}">${esc(lab?lab(x):x)}</button>`).join('');
  $('#st').innerHTML=h(Object.keys(STY),x=>sel.st==x,x=>STY[x][0]);
- $('#co').innerHTML=cs.length?h(cs,x=>sel.co.has(x)):'<span class="hint">Появятся, когда добавите вещи</span>';
+ $('#co').innerHTML=cs.length?h(cs,x=>sel.co.has(x),x=>x.charAt(0).toUpperCase()+x.slice(1)):'<span class="hint">Появятся, когда добавите вещи</span>';
  $('#we').innerHTML=h(WE,x=>sel.we==x);
- $('#wh').textContent=cfg().lat?'Если не выбрано, возьму текущую погоду вашего города.':'Если не выбрано, погода не учитывается. Город можно задать в настройках.'}
+ $('#wh').textContent=cfg().lat?'Если температуру не выбрать, возьму текущую погоду вашего города.':'Если температуру не выбрать, погода не учитывается. Город можно задать в настройках.'}
 document.addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const p=c.parentElement.id,v=c.dataset.v;
  if(p=='co')sel.co.has(v)?sel.co.delete(v):sel.co.add(v);else{const k=p=='st'?'st':'we';sel[k]=sel[k]==v?'':v}drawChips()});
 document.querySelector('nav').onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll('section').forEach(s=>s.hidden=s.id!=t);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b==e.target))};
 
+$('#rain').onclick=()=>{sel.rain=!sel.rain;$('#rain').classList.toggle('on',sel.rain);$('#rain').setAttribute('aria-pressed',sel.rain)};
 const load=async()=>{items=await all('items');items.sort((a,b)=>b.added-a.added);paint()};
 function paint(){
  $('#grid').innerHTML=items.length?items.map(i=>`<figure data-id="${i.id}"><img src="${i.img}"><figcaption><b class="cl">${esc(i.name)}</b><span class="cl hint">${esc(i.short)}</span><small>${CAT[i.cat]}${i.rating?' · '+'★'.repeat(i.rating):''}${i.dirty?' · в стирке':''}</small></figcaption></figure>`).join(''):'<p class="hint">Пока пусто. Добавьте фото вещей: по одной вещи на снимке, на ровном фоне.</p>';drawChips();wash()}
@@ -171,7 +179,7 @@ async function weather(){const s=cfg();if(!s.lat)return'';try{const c=(await(awa
 
 $('#go').onclick=async()=>{const av=items.filter(i=>!i.dirty);if(av.length<3)return say('Не хватает чистых вещей: добавьте новые или отметьте вещи как постиранные');
  $('#go').disabled=true;$('#res').innerHTML='<p class="hint">Подбираю образы…</p>';
- try{const w=sel.we||await weather(),log=await all('log'),
+ try{const w=[sel.we||await weather(),sel.rain&&'идёт дождь'].filter(Boolean).join(', '),log=await all('log'),
   worn=log.filter(l=>l.t=='worn'&&Date.now()-l.at<4*864e5).flatMap(l=>l.ids),
   fb=log.filter(l=>l.t=='fb').slice(-20).map(l=>`${l.r>0?'понравилось':'не понравилось'}: ${l.ids.map(nm).join(' + ')}${l.c?' (комментарий: '+l.c+')':''}`),
   cat=av.map(i=>({id:i.id,name:i.name,cat:i.cat,colors:i.colors,style:i.style,season:i.season,formality:i.formality,bold:i.bold,warmth:i.warmth||3,layer:i.layer||null,rating:i.rating||null})),wish=$('#wish').value.trim();
