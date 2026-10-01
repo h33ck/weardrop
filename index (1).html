@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Гардероб</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#F5EDE0"><meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--bg:#F5EDE0;--ink:#3A2E24;--mute:#8B7B6B;--line:#E4D6C1;--acc:#C9AA82;--card:#fff;--onacc:#3A2E24}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:2;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;border-bottom:1px solid var(--line)}
+h1{margin:0 0 8px;font:700 26px Georgia,serif;letter-spacing:-.5px}
+nav{display:flex;gap:6px}nav button{flex:1;padding:9px 0;border:0;border-radius:10px;background:transparent;color:var(--mute);font:inherit;font-weight:600}
+nav button.on{background:var(--card);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+main{max-width:640px;margin:0 auto;padding:12px 16px 40px}
+.lbl{margin:16px 0 6px;font-weight:600}.hint{color:var(--mute);font-size:14px;margin:6px 0}.err{color:#D92D20;margin:12px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:8px 14px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font:inherit;font-size:15px}
+.chip.on{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+textarea,select,input:not([type=file]){width:100%;padding:11px 12px;margin-top:6px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+textarea{height:64px;margin-top:16px;resize:none}
+.main{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:var(--acc);color:var(--onacc);font:inherit;font-weight:700;text-align:center}
+.main:disabled{opacity:.5}.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.out{margin-top:16px;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:14px}.out.chosen{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}figure{margin:0}
+.row figure{flex:0 0 92px}.row img,#grid img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:var(--line)}
+figcaption{font-size:13px;margin-top:4px}figcaption small{display:block;color:var(--mute)}
+.out p{margin:10px 0 0}.out .main{margin-top:12px;padding:11px}
+.fb{display:flex;gap:8px;margin-top:10px}.fb button{width:46px;border:1px solid var(--line);border-radius:10px;background:transparent;font-size:18px}.fb button.on{background:var(--acc)}
+.fb input{margin:0}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:16px}
+#msg{max-height:50vh;overflow:auto;word-break:break-word;position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));padding:12px;border-radius:12px;background:var(--ink);color:var(--bg);text-align:center}#msg:empty{display:none}
+nav button{font-size:14px}
+.cl{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin:0}
+figcaption .hint{margin:2px 0;font-size:13px}
+.two{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#dlg{position:fixed;inset:0;z-index:5;background:rgba(58,46,36,.55);overflow:auto;padding:16px}
+.sheet{max-width:560px;margin:0 auto;background:var(--bg);border-radius:16px;padding:16px}
+.sheet img{width:100%;max-height:38vh;object-fit:contain;border-radius:10px;background:var(--card)}
+.sheet label{display:block;margin-top:12px;font-weight:600;font-size:14px}
+#stars button{border:0;background:none;font-size:32px;line-height:1;padding:0 3px;color:var(--line)}#stars button.on{color:#C49A5A}
+.wc{margin-top:12px;padding:12px;background:var(--card);border:2px solid var(--line);border-radius:18px;touch-action:pan-y;user-select:none;-webkit-user-select:none;text-align:center}
+.wc img{width:100%;height:52vh;object-fit:contain;pointer-events:none}.wc h3{margin:8px 0 0}
+html{scroll-behavior:smooth}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(12px)}}
+@keyframes bye{to{opacity:0}}
+@keyframes sink{to{opacity:0;transform:translateY(24px)}}
+section:not([hidden]){animation:rise .35s ease-out}
+.out{animation:rise .45s cubic-bezier(.2,.8,.3,1) both}
+.wc{will-change:transform}.wc.in{animation:pop .45s cubic-bezier(.2,.9,.3,1)}
+#dlg:not([hidden]){animation:fade .22s ease-out}.sheet{animation:rise .3s cubic-bezier(.2,.8,.3,1)}
+#dlg.bye{animation:bye .22s forwards}#dlg.bye .sheet{animation:sink .22s forwards}
+#msg{animation:rise .25s ease-out}
+.chip,.main,nav button,.wb button,.fb button{transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s,transform .12s,opacity .2s}
+.chip:active,.main:active,.wb button:active,.fb button:active{transform:scale(.96)}
+#grid figure{transition:transform .15s}#grid figure:active{transform:scale(.96)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.wb{display:flex;gap:10px;margin-top:12px}.wb button{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;font-weight:600}
+</style></head><body>
+<header><h1>Гардероб</h1><nav><button data-t="pick" class="on">Подобрать</button><button data-t="closet">Вещи</button><button data-t="wash">Стирка</button><button data-t="set">Настройки</button></nav></header>
+<main>
+<section id="pick">
+<p class="lbl">Стиль</p><div class="chips" id="st"></div>
+<p class="lbl">Цвета</p><div class="chips" id="co"></div>
+<p class="lbl">Погода</p><div class="chips" id="we"></div><p class="hint" id="wh"></p>
+<textarea id="wish" placeholder="Настроение или свои пожелания (необязательно)"></textarea>
+<button class="main" id="go">Подобрать</button><div id="res"></div>
+</section>
+<section id="closet" hidden>
+<label class="main">Добавить фото<input type="file" id="file" accept="image/*" multiple hidden></label>
+<p class="hint" id="prog"></p><div id="grid"></div>
+</section>
+<section id="wash" hidden>
+</section>
+<section id="set" hidden>
+<p class="lbl">Ключ Gemini API</p><input id="key" type="password" autocomplete="off" placeholder="Ключ из Google AI Studio">
+<p class="lbl">Город для погоды</p><input id="city" placeholder="Город (необязательно)">
+<p class="lbl">Модель</p><input id="mod" placeholder="gemini-flash-latest">
+<button class="main" id="sv">Сохранить</button>
+<p class="hint">Все вещи и оценки хранятся только в этом телефоне. Сделайте копию, если меняете устройство.</p>
+<button class="main ghost" id="ex">Сохранить копию данных</button>
+<label class="main ghost">Загрузить копию<input type="file" id="im" accept=".json" hidden></label>
+</section>
+</main>
+<div id="dlg" hidden><div class="sheet"><img id="dimg" alt="">
+<label>Название<input id="dn"></label>
+<label>Краткое описание<input id="ds"></label>
+<label>Полное описание<textarea id="dd" style="height:130px"></textarea></label>
+<label>Категория<select id="dc"></select></label>
+<label>Слой (для верха)<select id="dl"><option value="">Определить по названию</option><option value="base">Базовый (футболка, рубашка)</option><option value="mid">Средний (свитшот, свитер)</option></select></label>
+<label>Цвета (через запятую)<input id="dcol"></label>
+<div class="two"><label>Теплота<select id="dw"></select></label><label>Нарядность<select id="df"></select></label><label>Яркость<select id="db"></select></label></div>
+<p class="hint">Теплота: 1 для жары, 5 для мороза.</p>
+<label>Ваша оценка (чем выше, тем чаще предлагается)</label><div id="stars"></div>
+<button class="main" id="dsave">Сохранить</button><button class="main ghost" id="dre">Описать заново через Gemini</button><button class="main ghost" id="ddel">Удалить вещь</button><button class="main ghost" id="dx">Закрыть</button>
+</div></div>
+<div id="msg"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const cfg=()=>JSON.parse(localStorage.cfg||'{}'),save=o=>localStorage.cfg=JSON.stringify({...cfg(),...o});
+const say=t=>{$('#msg').textContent=t.slice(0,900);clearTimeout(say.t);say.t=setTimeout(()=>$('#msg').textContent='',Math.max(4000,t.length*60))};
+const dbp=new Promise((ok,no)=>{const r=indexedDB.open('wardrobe',1);r.onupgradeneeded=()=>{r.result.createObjectStore('items',{keyPath:'id'});r.result.createObjectStore('log',{autoIncrement:true})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const tx=async(s,m,f)=>{const d=await dbp;return new Promise((ok,no)=>{const t=d.transaction(s,m),q=f(t.objectStore(s));t.oncomplete=()=>ok(q.result);t.onerror=()=>no(t.error)})};
+const all=s=>tx(s,'readonly',o=>o.getAll());
+const CAT={top:'верх',bottom:'низ',dress:'платье',shoes:'обувь',outer:'верхняя одежда',accessory:'аксессуар'};
+const WASH=['top','bottom','dress'];
+const SLOT={top:['top','dress'],bottom:['bottom'],shoes:['shoes'],outer:['outer'],accessory:['accessory']};
+const STY={walk:['Прогулка с собакой','неяркая, немаркая, неброская и практичная одежда, ничего нарядного (формальность 1-2, яркость низкая)'],event:['Мероприятие','самая элегантная и красивая одежда из имеющейся (формальность 4-5)'],day:['Обычный день','удобное, нейтральное, без изысков (формальность 2-3)'],sport:['Спорт','спортивная, комфортная одежда']};
+const WE=['Холодно (до +5°)','Прохладно (+5…+15°)','Тепло (+15…+25°)','Жарко (от +25°)','Дождь'];
+const ANA='На фото одна вещь одежды. Верни JSON: {"name":"конкретное название с ключевыми признаками, например «Чёрный пуховик прямого кроя с капюшоном»","short":"одна фраза до 70 символов: материал, покрой, особенность","details":"3-5 предложений: оттенок цвета, материал и фактура, покрой и посадка, длина, детали (карманы, застёжки, принт, капюшон), с чем сочетать и когда уместно","cat":"top|bottom|dress|shoes|outer|accessory","layer":"только для cat top: base — тонкий базовый слой (футболка, майка, лонгслив, рубашка), mid — средний тёплый слой (свитшот, худи, свитер, кардиган, жилет); иначе null","colors":["до 3 основных цветов, по-русски, одно слово, нижний регистр"],"style":["casual|sport|elegant|classic|street"],"season":["зима|весна|лето|осень"],"formality":1-5,"bold":1-5,"warmth":1-5}. Описывай только то, что видно на фото; если материал неочевиден, пиши «похоже на …». warmth: 1 очень лёгкая (для жары), 3 демисезон, 5 очень тёплая (для мороза). formality: 1 очень простая, 5 очень нарядная. bold: 1 неброская, 5 очень яркая. top: футболка, рубашка, свитер; outer: куртка, пальто; dress: платье или комбинезон.';
+let items=[],outs=[],sel={st:'',co:new Set(),we:''};
+const nm=id=>items.find(i=>i.id==id)?.name||'?';
+
+async function gem(parts,temp){const s=cfg();if(!s.key)throw Error('Сначала добавьте ключ Gemini в настройках');
+ for(let i=0;i<4;i++){const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${s.model||'gemini-flash-latest'}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':s.key},body:JSON.stringify({contents:[{parts}],generationConfig:{responseMimeType:'application/json',temperature:temp}})});
+  if(r.status==429||r.status==503){const m=(await r.json().catch(()=>({}))).error?.message||'';gem.last=r.status+': '+m;if(/limit: 0/i.test(m))break;await sleep(7000*(i+1));continue}
+  const j=await r.json();if(!r.ok)throw Error(j.error?.message||'Ошибка '+r.status);
+  return JSON.parse(j.candidates[0].content.parts.map(p=>p.text||'').join('').replace(/```json|```/g,''))}
+ throw Error('Gemini не ответил, '+(gem.last||'нет ответа'))}
+
+async function analyze(img){const d=await gem([{text:ANA},{inline_data:{mime_type:'image/jpeg',data:img.split(',')[1]}}],.2);return{name:d.name||'Вещь',short:d.short||'',details:d.details||'',cat:CAT[d.cat]?d.cat:'top',colors:d.colors||[],style:d.style||[],season:d.season||[],formality:d.formality||3,bold:d.bold||2,warmth:d.warmth||3,layer:d.layer=='mid'||d.layer=='base'?d.layer:''}}
+async function shrink(f,max=640){const b=await createImageBitmap(f),k=Math.min(1,max/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)}
+
+function drawChips(){const on=(c,v)=>c?' on':'',cs=[...new Set(items.flatMap(i=>i.colors))];
+ const h=(list,f,lab)=>list.map(x=>`<button class="chip${f(x)?' on':''}" data-v="${esc(x)}">${esc(lab?lab(x):x)}</button>`).join('');
+ $('#st').innerHTML=h(Object.keys(STY),x=>sel.st==x,x=>STY[x][0]);
+ $('#co').innerHTML=cs.length?h(cs,x=>sel.co.has(x)):'<span class="hint">Появятся, когда добавите вещи</span>';
+ $('#we').innerHTML=h(WE,x=>sel.we==x);
+ $('#wh').textContent=cfg().lat?'Если не выбрано, возьму текущую погоду вашего города.':'Если не выбрано, погода не учитывается. Город можно задать в настройках.'}
+document.addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const p=c.parentElement.id,v=c.dataset.v;
+ if(p=='co')sel.co.has(v)?sel.co.delete(v):sel.co.add(v);else{const k=p=='st'?'st':'we';sel[k]=sel[k]==v?'':v}drawChips()});
+document.querySelector('nav').onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll('section').forEach(s=>s.hidden=s.id!=t);document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b==e.target))};
+
+const load=async()=>{items=await all('items');items.sort((a,b)=>b.added-a.added);paint()};
+function paint(){
+ $('#grid').innerHTML=items.length?items.map(i=>`<figure data-id="${i.id}"><img src="${i.img}"><figcaption><b class="cl">${esc(i.name)}</b><span class="cl hint">${esc(i.short)}</span><small>${CAT[i.cat]}${i.rating?' · '+'★'.repeat(i.rating):''}${i.dirty?' · в стирке':''}</small></figcaption></figure>`).join(''):'<p class="hint">Пока пусто. Добавьте фото вещей: по одной вещи на снимке, на ровном фоне.</p>';drawChips();wash()}
+let cur=null;
+['dw','df','db'].forEach(id=>$('#'+id).innerHTML=[1,2,3,4,5].map(n=>`<option>${n}</option>`).join(''));
+$('#dc').innerHTML=Object.keys(CAT).map(k=>`<option value="${k}">${CAT[k]}</option>`).join('');
+const stars=()=>$('#stars').innerHTML=[1,2,3,4,5].map(n=>`<button data-s="${n}" class="${n<=cur.rating?'on':''}">★</button>`).join('');
+const fill=i=>{$('#dimg').src=i.img;$('#dn').value=i.name||'';$('#ds').value=i.short||'';$('#dd').value=i.details||'';$('#dc').value=i.cat;$('#dl').value=i.layer||'';$('#dcol').value=(i.colors||[]).join(', ');$('#dw').value=i.warmth||3;$('#df').value=i.formality||3;$('#db').value=i.bold||2};
+$('#grid').onclick=e=>{const f=e.target.closest('figure');if(!f)return;cur={...items.find(i=>i.id==f.dataset.id)};cur.rating=cur.rating||0;fill(cur);stars();$('#dlg').hidden=false};
+$('#stars').onclick=e=>{const n=+e.target.dataset.s;if(n){cur.rating=cur.rating==n?0:n;stars()}};
+const shut=()=>{const d=$('#dlg');d.classList.add('bye');setTimeout(()=>{d.hidden=true;d.classList.remove('bye')},220)};
+$('#dx').onclick=shut;
+$('#dsave').onclick=async()=>{Object.assign(cur,{name:$('#dn').value.trim()||cur.name,short:$('#ds').value.trim(),details:$('#dd').value.trim(),cat:$('#dc').value,layer:$('#dl').value,colors:$('#dcol').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean),warmth:+$('#dw').value,formality:+$('#df').value,bold:+$('#db').value});if(!WASH.includes(cur.cat))cur.dirty=false;await tx('items','readwrite',o=>o.put(cur));shut();load()};
+$('#ddel').onclick=async()=>{if(confirm('Удалить вещь?')){await tx('items','readwrite',o=>o.delete(cur.id));shut();load()}};
+$('#dre').onclick=async()=>{say('Описываю заново…');try{cur={...cur,...await analyze(cur.img)};fill(cur);say('Готово. Проверьте и нажмите «Сохранить»')}catch(e){say(e.message)}};
+
+const queue=()=>items.filter(i=>i.dirty).sort((a,b)=>(a.q||0)-(b.q||0));
+const fly=(c,ok)=>{if(c.dataset.f)return;c.dataset.f=1;c.style.transition='transform .35s cubic-bezier(.4,0,.8,.6),opacity .3s';c.style.transform=`translateX(${ok?'':'-'}120vw) rotate(${ok?18:-18}deg)`;c.style.opacity=0;setTimeout(()=>done(ok),300)};
+const done=async ok=>{const it=queue()[0];if(!it)return;wash.id=null;if(ok)it.dirty=false;else it.q=Date.now();await tx('items','readwrite',o=>o.put(it));paint()};
+function wash(){const q=queue(),it=q[0],fresh=wash.id!=it?.id;wash.id=it?.id;
+ document.querySelector('[data-t=wash]').textContent='Стирка'+(q.length?` (${q.length})`:'');
+ $('#wash').innerHTML=it?`<p class="hint">Осталось: ${q.length}. Смахните вправо, если постирано, влево, если ещё нет.</p><div class="wc${fresh?' in':''}" id="wc"><img src="${it.img}"><h3>${esc(it.name)}</h3><p class="hint">${esc(it.details||it.short)}</p></div><div class="wb"><button data-w="0">← Ещё нет</button><button data-w="1">Постирано →</button></div>`:'<p class="hint">Грязных вещей нет. Вещи попадают сюда после «Надену этот» (кроме обуви, верхней одежды и аксессуаров).</p>';
+ const c=$('#wc');if(!c)return;let x=null;
+ c.onpointerdown=e=>{if(c.dataset.f)return;x=e.clientX;c.style.transition='none';c.setPointerCapture(e.pointerId)};
+ c.onpointermove=e=>{if(x==null)return;const d=e.clientX-x;c.style.transform=`translateX(${d}px) rotate(${d/25}deg)`;c.style.borderColor=d>0?'var(--acc)':'var(--mute)'};
+ c.onpointerup=e=>{if(x==null)return;const d=e.clientX-x;x=null;if(Math.abs(d)>90)fly(c,d>0);else{c.style.transition='transform .45s cubic-bezier(.2,1.3,.3,1),border-color .3s';c.style.transform='';c.style.borderColor=''}};
+ c.onpointercancel=()=>{x=null;c.style.transition='transform .3s';c.style.transform=''}}
+$('#wash').onclick=e=>{const w=e.target.dataset.w;if(w!=null&&$('#wc'))fly($('#wc'),w=='1')};
+$('#file').onchange=async e=>{const fs=[...e.target.files];e.target.value='';let n=0;
+ for(const f of fs){$('#prog').textContent=`Описываю вещь ${++n} из ${fs.length}…`;
+  try{const img=await shrink(f),d=await analyze(img);
+   await tx('items','readwrite',o=>o.put({id:crypto.randomUUID(),img,rating:0,dirty:false,added:Date.now(),...d}));
+   if(n<fs.length)await sleep(4500)}catch(err){$('#prog').textContent='';return say(err.message)}}
+ $('#prog').textContent='';load()};
+
+async function weather(){const s=cfg();if(!s.lat)return'';try{const c=(await(await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,precipitation`)).json()).current;return`сейчас ${Math.round(c.temperature_2m)}°C${c.precipitation>0?', идут осадки':''}`}catch{return''}}
+
+$('#go').onclick=async()=>{const av=items.filter(i=>!i.dirty);if(av.length<3)return say('Не хватает чистых вещей: добавьте новые или отметьте вещи как постиранные');
+ $('#go').disabled=true;$('#res').innerHTML='<p class="hint">Подбираю образы…</p>';
+ try{const w=sel.we||await weather(),log=await all('log'),
+  worn=log.filter(l=>l.t=='worn'&&Date.now()-l.at<4*864e5).flatMap(l=>l.ids),
+  fb=log.filter(l=>l.t=='fb').slice(-20).map(l=>`${l.r>0?'понравилось':'не понравилось'}: ${l.ids.map(nm).join(' + ')}${l.c?' (комментарий: '+l.c+')':''}`),
+  cat=av.map(i=>({id:i.id,name:i.name,cat:i.cat,colors:i.colors,style:i.style,season:i.season,formality:i.formality,bold:i.bold,warmth:i.warmth||3,layer:i.layer||null,rating:i.rating||null})),wish=$('#wish').value.trim();
+  const p=`Ты стилист. Из гардероба составь ровно 5 разных образов.
+Гардероб: ${JSON.stringify(cat)}
+Правила: образ состоит из слоёв: tops = от 1 до 2 вещей cat top (сначала базовый слой layer base, затем средний layer mid; платье cat dress заменяет низ, тогда bottom=null) + bottom + shoes + outer (cat outer, верхний слой поверх tops). Слои не дублируй (не две футболки). Число слоёв по погоде: жарко (от +25°): 1 лёгкий слой без outer; тепло (+15…+25°): 1 слой, можно лёгкая кофта вторым; прохладно (+5…+15°): 2 слоя (например футболка + свитшот или свитер) и при необходимости лёгкий outer; холодно (до +5°): 3 слоя (футболка + свитшот или свитер + тёплый outer), никогда не предлагай одну куртку без слоя под ней; при дожде outer непромокаемый, если есть. Если layer у вещи null, определи слой по названию; accessory = id вещи cat accessory или null, иначе accessory_idea = короткая идея аксессуара или null. Используй ТОЛЬКО id из гардероба, не выдумывай вещей. Образы должны заметно отличаться. warmth: 1 очень лёгкая, 5 очень тёплая; суммарная теплота слоёв должна соответствовать погоде. rating: оценка владельца 1-5 (null: не задана, считай нейтральной). Вещи с оценкой 4-5 предлагай чаще, с оценкой 1-2 редко, но не строй все образы только из любимых вещей.
+${sel.st?'Стиль: '+STY[sel.st][1]+'.':''}
+${sel.co.size?'Цвета (важнее стиля): '+[...sel.co].join(', ')+'.':''}
+${w?'Погода: '+w+'.':''}
+${wish?'Пожелания: '+wish:''}
+${worn.length?'Недавно надетые id, не повторяй: '+worn.join(', '):''}
+${fb.length?'Прошлые оценки пользователя, учитывай вкус:\n'+fb.join('\n'):''}
+Если вещей не хватает под условия, скажи об этом в note и предложи ближайший вариант.
+Ответ JSON: {"outfits":[{"tops":["id базового слоя","id среднего слоя или пропусти"],"bottom":"id|null","shoes":"id","outer":"id|null","accessory":"id|null","accessory_idea":"строка|null","why":"1-2 предложения по-русски"}],"note":"строка|null"}`;
+  render(await gem([{text:p}],1))}catch(e){$('#res').innerHTML=`<p class="err">${esc(e.message)}</p>`}
+ $('#go').disabled=false};
+
+function render(d){const get=(id,k)=>{const i=items.find(x=>x.id==id);return i&&!i.dirty&&SLOT[k].includes(i.cat)?i:null};
+ outs=(d.outfits||[]).map(o=>{const ts=[...new Set([].concat(o.tops||o.top).map(id=>get(id,'top')).filter(Boolean))].slice(0,2),dr=ts.find(x=>x.cat=='dress'),b=get(o.bottom,'bottom'),s=get(o.shoes,'shoes');
+  if(!ts.length||!s||(!dr&&!b))return null;
+  return{its:[...ts,dr?null:b,s,get(o.outer,'outer'),get(o.accessory,'accessory')].filter(Boolean),idea:o.accessory_idea,why:o.why}}).filter(Boolean).slice(0,5);
+ $('#res').innerHTML=(d.note?`<p class="hint">${esc(d.note)}</p>`:'')+(outs.length?outs.map((o,n)=>`<article class="out" data-n="${n}" style="animation-delay:${n*80}ms"><div class="row">${o.its.map(i=>`<figure><img src="${i.img}"><figcaption>${esc(i.name)}</figcaption></figure>`).join('')}</div><p>${esc(o.why)}</p>${o.idea&&!o.its.some(i=>i.cat=='accessory')?`<p class="hint">Аксессуар: ${esc(o.idea)}</p>`:''}<button class="main pick">Надену этот</button><div class="fb"><button data-r="1">👍</button><button data-r="-1">👎</button><input placeholder="Комментарий (необязательно)"></div></article>`).join(''):'<p class="err">Не получилось составить образы. Попробуйте ещё раз.</p>')}
+$('#res').onclick=async e=>{const a=e.target.closest('.out');if(!a)return;const ids=outs[a.dataset.n].its.map(i=>i.id);
+ if(e.target.matches('.pick')){await tx('log','readwrite',o=>o.add({t:'worn',ids,at:Date.now()}));for(const it of outs[a.dataset.n].its)if(WASH.includes(it.cat)){it.dirty=true;it.q=Date.now();await tx('items','readwrite',o=>o.put(it))}paint();a.classList.add('chosen');e.target.textContent='Выбрано'}
+ else if(e.target.dataset.r){await tx('log','readwrite',o=>o.add({t:'fb',ids,r:+e.target.dataset.r,c:a.querySelector('input').value.trim(),at:Date.now()}));e.target.parentElement.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b==e.target))}};
+
+$('#sv').onclick=async()=>{const o={key:$('#key').value.trim(),model:$('#mod').value.trim()},c=$('#city').value.trim();
+ if(!c)Object.assign(o,{city:'',lat:0,lon:0});
+ else if(c!=cfg().city){try{const p=(await(await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(c)}&count=1&language=ru`)).json()).results?.[0];if(!p)return say('Город не найден');Object.assign(o,{city:c,lat:p.latitude,lon:p.longitude})}catch{return say('Не удалось найти город')}}
+ save(o);drawChips();say('Сохранено')};
+$('#ex').onclick=async()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({items:await all('items'),log:await all('log')})],{type:'application/json'}));a.download='wardrobe.json';a.click()};
+$('#im').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());for(const i of d.items)await tx('items','readwrite',o=>o.put(i));for(const l of d.log)await tx('log','readwrite',o=>o.add(l));load();say('Копия загружена')}catch{say('Не удалось прочитать файл')}};
+
+const s0=cfg();$('#key').value=s0.key||'';$('#city').value=s0.city||'';$('#mod').value=s0.model||'';
+navigator.storage?.persist?.();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+load();
+</script></body></html>
